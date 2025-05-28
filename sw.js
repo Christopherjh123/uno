@@ -4,14 +4,8 @@ const urlsToCache = [
   '/index.html',
   '/manifest.json',
   '/sw.js',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
   'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap',
-  '/styles.css',
-  '/script.js',
-  '/uno.js',
-  '/phase10.js'
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap'
   // Add additional files (CSS, JS, images) here as needed
 ];
 

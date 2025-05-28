@@ -81,6 +81,64 @@ function drawCard(playerType, count) {
     }
 }
 
+function renderHands() {
+    const playerHandElement = document.getElementById('player-hand');
+    const playerCardCountElement = document.getElementById('player-card-count');
+    const botCardCountElement = document.getElementById('bot-card-count');
+
+    playerHandElement.innerHTML = '';
+    playerHand.forEach((card, index) => {
+        const cardElement = createCardElement(card, index);
+        if (currentPlayer === 'player' && isValidPlay(card)) {
+            cardElement.classList.add('highlighted');
+        } else if (currentPlayer === 'player') {
+            cardElement.classList.add('disabled');
+        }
+        playerHandElement.appendChild(cardElement);
+    });
+
+    playerCardCountElement.textContent = playerHand.length;
+    botCardCountElement.textContent = botHand.length;
+}
+
+function createCardElement(card, index = -1) {
+    const cardElement = document.createElement('div');
+    cardElement.classList.add('card', `bg-${card.color}`);
+    if (index !== -1) cardElement.dataset.index = index;
+    let cardContent = '';
+    if (card.type === 'number') {
+        cardContent = `<span class="card-value">${card.value}</span>`;
+    } else if (card.type === 'action') {
+        let icon = '';
+        if (card.value === 'skip') icon = '🚫';
+        else if (card.value === 'reverse') icon = '🔄';
+        else if (card.value === 'draw2') icon = '+2';
+        cardContent = `<span class="card-action-icon">${icon}</span>`;
+    } else if (card.type === 'wild') {
+        let text = '';
+        if (card.value === 'wild') text = 'WILD';
+        else if (card.value === 'wild4') text = '+4<br>WILD';
+        cardContent = `<span class="card-wild-text">${text}</span>`;
+    }
+    cardElement.innerHTML = cardContent;
+    return cardElement;
+}
+
+function renderDiscardPile() {
+    const discardPileElement = document.getElementById('discard-pile');
+    discardPileElement.innerHTML = '';
+    if (currentCard) {
+        const cardElement = createCardElement(currentCard);
+        cardElement.classList.remove('highlighted', 'disabled');
+        cardElement.classList.add(`bg-${currentCard.color}`);
+        discardPileElement.appendChild(cardElement);
+    } else {
+        discardPileElement.innerHTML = '<span class="text-lg">Discard</span>';
+        colors.forEach(c => discardPileElement.classList.remove(`bg-${c}`));
+        discardPileElement.classList.add('bg-gray-800');
+    }
+}
+
 function isValidPlay(card) {
     if (!currentCard) return true;
     if (card.type === 'wild') return true;
@@ -94,7 +152,10 @@ function playCard(playerType, card, cardIndex) {
     currentCard = { ...card };
     unoCalled[playerType] = false;
 
-    const requiresColorChoice = applyCardEffect(card, playerType);
+    applyCardEffect(card, playerType);
+
+    renderHands();
+    renderDiscardPile();
 
     if (hand.length === 0) {
         endGame(playerType);
@@ -113,16 +174,10 @@ function playCard(playerType, card, cardIndex) {
         document.getElementById('uno-button').classList.add('disabled');
     }
 
-    if (!requiresColorChoice) {
-        setTimeout(() => {
-            nextTurn();
-        }, 700);
-    }
+    setTimeout(() => nextTurn(), 700);
 }
 
 function applyCardEffect(card, playerType) {
-    let requiresColorChoice = false;
-
     if (card.type === 'action') {
         if (card.value === 'skip') {
             showMessage(`${playerType === 'player' ? 'You' : 'Bot'} played a Skip card!`);
@@ -140,15 +195,12 @@ function applyCardEffect(card, playerType) {
         if (card.value === 'wild') {
             showMessage(`${playerType === 'player' ? 'You' : 'Bot'} played a Wild card.`);
             if (playerType === 'player') {
-                requiresColorChoice = true;
                 showColorPicker();
             } else {
                 const chosenColor = botChooseColor(botHand);
                 currentCard.color = chosenColor;
                 showMessage(`Bot chose ${chosenColor.toUpperCase()}!`);
-                setTimeout(() => {
-                    nextTurn();
-                }, 500);
+                setTimeout(() => nextTurn(), 500);
             }
         } else if (card.value === 'wild4') {
             showMessage(`${playerType === 'player' ? 'You' : 'Bot'} played a +4 Wild card!`);
@@ -156,20 +208,15 @@ function applyCardEffect(card, playerType) {
             drawCard(nextPlayer, 4);
             skipNextTurnFlag = true;
             if (playerType === 'player') {
-                requiresColorChoice = true;
                 showColorPicker();
             } else {
                 const chosenColor = botChooseColor(botHand);
                 currentCard.color = chosenColor;
                 showMessage(`Bot chose ${chosenColor.toUpperCase()}!`);
-                setTimeout(() => {
-                    nextTurn();
-                }, 500);
+                setTimeout(() => nextTurn(), 500);
             }
         }
     }
-
-    return requiresColorChoice;
 }
 
 function getNextPlayer() {
@@ -283,17 +330,15 @@ function showColorPicker() {
     document.getElementById('color-picker-modal').classList.add('active');
 }
 
-function hideColorPicker() {
-    document.getElementById('color-picker-modal').classList.remove('active');
-}
-
 function chooseColor(color) {
     currentCard.color = color;
     showMessage(`Color changed to ${color.toUpperCase()}!`);
     hideColorPicker();
-    setTimeout(() => {
-        nextTurn();
-    }, 500);
+    setTimeout(() => nextTurn(), 500);
+}
+
+function hideColorPicker() {
+    document.getElementById('color-picker-modal').classList.remove('active');
 }
 
 function showMessage(message) {

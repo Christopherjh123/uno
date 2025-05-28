@@ -294,6 +294,8 @@
             cursor: not-allowed;
         }
     </style>
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4CAF50">
 </head>
 <body class="bg-gray-900 text-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
 
@@ -1072,5 +1074,14 @@
         // Initial setup on load
         resetGame();
     </script>
+    <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('Service Worker registered!', reg))
+      .catch(err => console.log('Service Worker registration failed: ', err));
+  });
+}
+</script>
 </body>
 </html>

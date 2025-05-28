@@ -26,12 +26,22 @@
 
     <!-- Phase 10 Game Container -->
     <div id="phase10-container" class="game-container hidden flex flex-col items-center">
-        <h2 class="text-2xl font-bold mb-4">Phase 10</h2>
-        <div id="phase10-message" class="message-box mb-4">Welcome to Phase 10!</div>
-        <div id="phase10-player-hand" class="hand"></div>
-        <button id="phase10-draw-button" class="btn btn-primary mt-4">Draw Card</button>
-        <button id="phase10-reset-button" class="btn btn-secondary mt-2">Reset Game</button>
+    <h2 class="text-2xl font-bold mb-4">Phase 10</h2>
+    <div class="flex justify-between w-full max-w-md mb-4">
+        <div>
+            <strong>Phase:</strong> <span id="phase-number">1</span><br>
+            <strong>Goal:</strong> <span id="phase-description"></span>
+        </div>
+        <div>
+            <strong>Score:</strong> <span id="score-value">0</span>
+        </div>
     </div>
+    <div id="phase10-message" class="message-box mb-4">Welcome to Phase 10!</div>
+    <div id="phase10-player-hand" class="hand mb-4"></div>
+    <div id="discard-pile" class="mb-4"></div>
+    <button id="phase10-draw-button" class="btn btn-primary mt-4">Draw Card</button>
+    <button id="phase10-reset-button" class="btn btn-secondary mt-2">Reset Game</button>
+</div>
 
     <!-- Modals -->
     <div id="color-picker-modal" class="modal-overlay">

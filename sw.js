@@ -7,7 +7,11 @@ const urlsToCache = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap'
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap',
+  '/styles.css',
+  '/script.js',
+  '/uno.js',
+  '/phase10.js'
   // Add additional files (CSS, JS, images) here as needed
 ];
 

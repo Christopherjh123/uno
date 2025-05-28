@@ -2,10 +2,18 @@
 
 let phase10Deck = [];
 let phase10PlayerHand = [];
-let phase10DiscardPile = [];
+let phase10Bots = [
+    { hand: [], name: "Bot 1", phaseProgress: 1 },
+    { hand: [], name: "Bot 2", phaseProgress: 1 },
+    { hand: [], name: "Bot 3", phaseProgress: 1 }
+];
+
 let currentPhase = 1;
 let currentCard = null;
-let score = 0;
+let currentPlayer = 'player'; // 'player', 'bot1', 'bot2', 'bot3'
+let gameDirection = 1; // 1 = forward, -1 = reverse
+let phaseCompletedByPlayers = {};
+let discardPile = [];
 
 const PHASES = [
     { description: "Two sets of 3", sets: 2, setType: 'set', setCount: 3 },
@@ -25,7 +33,6 @@ function createPhase10Deck() {
     const values = [...Array(12).keys()].map(i => i + 1); // 1–12
     let newDeck = [];
 
-    // Number cards
     colors.forEach(color => {
         values.forEach(value => {
             newDeck.push({ color, value });
@@ -33,7 +40,7 @@ function createPhase10Deck() {
         });
     });
 
-    // Wild cards (worth 50 points)
+    // Wild cards worth 50 points
     for (let i = 0; i < 8; i++) {
         newDeck.push({ color: 'black', value: 50 });
     }
@@ -52,74 +59,98 @@ function shuffle(array) {
 function dealInitialCards() {
     phase10PlayerHand = phase10Deck.slice(0, 10);
     phase10Deck = phase10Deck.slice(10);
-    phase10DiscardPile = [phase10Deck.pop()];
-    currentCard = phase10DiscardPile[0];
+
+    phase10Bots.forEach(bot => {
+        bot.hand = phase10Deck.slice(0, 10);
+        phase10Deck = phase10Deck.slice(10);
+    });
+
+    discardPile = [phase10Deck.pop()];
+    currentCard = discardPile[0];
     renderUI();
 }
 
-function drawCard() {
+function drawCard(playerType) {
     if (phase10Deck.length === 0) {
         showMessage("No more cards to draw.");
         return;
     }
     const drawnCard = phase10Deck.pop();
-    phase10PlayerHand.push(drawnCard);
-    showMessage(`You drew a ${drawnCard.value} ${drawnCard.color.toUpperCase()} card.`);
+
+    if (playerType === 'player') {
+        phase10PlayerHand.push(drawnCard);
+        showMessage(`You drew a ${drawnCard.value} ${drawnCard.color.toUpperCase()} card.`);
+    } else {
+        const botIndex = parseInt(playerType.replace('bot', '')) - 1;
+        phase10Bots[botIndex].hand.push(drawnCard);
+    }
+
     renderUI();
 }
 
 function discardCard(index) {
     const card = phase10PlayerHand.splice(index, 1)[0];
-    phase10DiscardPile.unshift(card);
+    discardPile.unshift(card);
     currentCard = card;
-    checkPhaseCompletion();
+
+    checkPhaseCompletion('player');
     renderUI();
+    nextTurn();
 }
 
-function checkPhaseCompletion() {
+function checkPhaseCompletion(playerType) {
     const phase = PHASES[currentPhase - 1];
-    const groups = groupByColorAndValue(phase10PlayerHand);
+    const hand = playerType === 'player' ? phase10PlayerHand : phase10Bots[playerType.replace('bot', '') - 1].hand;
+    const groups = groupByColorAndValue(hand);
 
     if (phase.sets && phase.setType === 'set') {
         const setCount = countSets(groups.values, phase.setCount);
         if (setCount >= phase.sets) {
-            completePhase();
+            phaseCompletedByPlayers[playerType] = true;
+            showMessage(`${playerType === 'player' ? 'You' : phase10Bots[playerType.replace('bot', '') - 1].name} completed Phase ${currentPhase}!`);
         }
     } else if (phase.run) {
         const runCount = countRuns(groups.colors);
         if (runCount >= (phase.runCount || 1)) {
-            completePhase();
+            phaseCompletedByPlayers[playerType] = true;
+            showMessage(`${playerType === 'player' ? 'You' : phase10Bots[playerType.replace('bot', '') - 1].name} completed Phase ${currentPhase}!`);
         }
     } else if (phase.colorMatch) {
         const colorCounts = {};
-        phase10PlayerHand.forEach(c => {
+        hand.forEach(c => {
             colorCounts[c.color] = (colorCounts[c.color] || 0) + 1;
         });
         for (let color in colorCounts) {
             if (colorCounts[color] >= phase.colorCount) {
-                completePhase();
+                phaseCompletedByPlayers[playerType] = true;
+                showMessage(`${playerType === 'player' ? 'You' : phase10Bots[playerType.replace('bot', '') - 1].name} completed Phase ${currentPhase}!`);
                 break;
             }
         }
     }
-}
 
-function completePhase() {
-    showMessage(`✅ Completed Phase ${currentPhase}!`);
-    updateScore();
-    if (currentPhase < 10) {
-        currentPhase++;
-        document.getElementById('phase-number').textContent = currentPhase;
-        document.getElementById('phase-description').textContent = PHASES[currentPhase - 1].description;
-    } else {
-        showMessage("🎉 You completed all phases!");
+    if (Object.keys(phaseCompletedByPlayers).length === Object.keys(getAllPlayers()).length) {
+        completePhaseForAll();
     }
 }
 
-function updateScore() {
-    let totalPoints = phase10PlayerHand.reduce((sum, card) => sum + card.value, 0);
-    score += totalPoints;
-    document.getElementById('score-value').textContent = score;
+function completePhaseForAll() {
+    currentPhase++;
+    phaseCompletedByPlayers = {};
+    if (currentPhase <= 10) {
+        document.getElementById('phase-number').textContent = currentPhase;
+        document.getElementById('phase-description').textContent = PHASES[currentPhase - 1].description;
+        resetRound();
+    } else {
+        endGame();
+    }
+}
+
+function resetRound() {
+    phase10Deck = createPhase10Deck();
+    phase10PlayerHand = [];
+    phase10Bots.forEach(bot => bot.hand = []);
+    dealInitialCards();
 }
 
 function groupByColorAndValue(hand) {
@@ -161,17 +192,60 @@ function countRuns(colorGroups) {
     return runCount;
 }
 
-function resetGame() {
-    phase10Deck = createPhase10Deck();
-    phase10PlayerHand = [];
-    phase10DiscardPile = [];
-    currentPhase = 1;
-    score = 0;
-    dealInitialCards();
-    document.getElementById('phase-number').textContent = currentPhase;
-    document.getElementById('phase-description').textContent = PHASES[0].description;
-    document.getElementById('score-value').textContent = score;
-    showMessage("Game reset! Good luck!");
+function getAllPlayers() {
+    return {
+        player: phase10PlayerHand,
+        bot1: phase10Bots[0].hand,
+        bot2: phase10Bots[1].hand,
+        bot3: phase10Bots[2].hand
+    };
+}
+
+function isValidPlay(playerType, card) {
+    const hand = playerType === 'player' ? phase10PlayerHand : phase10Bots[playerType.replace('bot', '') - 1].hand;
+    return card.color === currentCard.color || card.value === currentCard.value || card.type === 'wild';
+}
+
+function nextTurn() {
+    const players = Object.keys(getAllPlayers());
+    const currentIndex = players.indexOf(currentPlayer);
+    const nextIndex = (currentIndex + gameDirection + players.length) % players.length;
+    currentPlayer = players[nextIndex];
+    showMessage(`${getPlayerName(currentPlayer)}'s turn!`);
+
+    if (currentPlayer.startsWith('bot')) {
+        setTimeout(() => botPlay(currentPlayer), 1500);
+    }
+}
+
+function getPlayerName(type) {
+    if (type === 'player') return 'You';
+    return phase10Bots[parseInt(type.replace('bot', '')) - 1].name;
+}
+
+function botPlay(botType) {
+    const botIndex = parseInt(botType.replace('bot', '')) - 1;
+    const botHand = phase10Bots[botIndex].hand;
+    const playableCards = botHand.filter(card => isValidPlay(botType, card));
+
+    if (playableCards.length > 0) {
+        const cardToPlay = playableCards[Math.floor(Math.random() * playableCards.length)];
+        const cardIndex = botHand.indexOf(cardToPlay);
+        phase10Bots[botIndex].hand.splice(cardIndex, 1);
+        discardPile.unshift(cardToPlay);
+        currentCard = cardToPlay;
+        checkPhaseCompletion(botType);
+        showMessage(`${getPlayerName(botType)} played a ${cardToPlay.value} ${cardToPlay.color.toUpperCase()} card.`);
+    } else {
+        drawCard(botType);
+    }
+
+    renderUI();
+    nextTurn();
+}
+
+function updateScores() {
+    // Score calculation can be added here based on remaining cards
 }
 
 function renderUI() {
@@ -188,7 +262,7 @@ function renderUI() {
     });
 
     discardElement.innerHTML = '';
-    const topCard = phase10DiscardPile[0];
+    const topCard = discardPile[0];
     const cardEl = document.createElement('div');
     cardEl.className = `card bg-${topCard.color} text-white p-2 rounded-lg text-center`;
     cardEl.textContent = topCard.value;
@@ -199,15 +273,48 @@ function showMessage(message) {
     document.getElementById('phase10-message').textContent = message;
 }
 
+function startPhase10() {
+    phase10Deck = createPhase10Deck();
+    phase10PlayerHand = [];
+    phase10Bots.forEach(bot => bot.hand = []);
+    phaseCompletedByPlayers = {};
+    currentPhase = 1;
+    document.getElementById('phase-number').textContent = currentPhase;
+    document.getElementById('phase-description').textContent = PHASES[0].description;
+    dealInitialCards();
+    currentPlayer = 'player';
+    showMessage("Your turn! Draw or play cards.");
+}
+
+function resetGame() {
+    phase10Deck = createPhase10Deck();
+    phase10PlayerHand = [];
+    phase10Bots.forEach(bot => bot.hand = []);
+    currentPhase = 1;
+    document.getElementById('phase-number').textContent = currentPhase;
+    document.getElementById('phase-description').textContent = PHASES[0].description;
+    dealInitialCards();
+    showMessage("Game reset! Good luck!");
+}
+
+function endGame() {
+    // Calculate final scores
+    let scores = {};
+    scores['You'] = phase10PlayerHand.reduce((sum, c) => sum + c.value, 0);
+    phase10Bots.forEach((bot, i) => {
+        scores[bot.name] = bot.hand.reduce((sum, c) => sum + c.value, 0);
+    });
+
+    let winner = Object.keys(scores).reduce((a, b) => scores[a] < scores[b] ? a : b);
+
+    showMessage(`🎉 Game Over! Winner: ${winner} with ${scores[winner]} points!`);
+}
+
 // Event Listeners
-document.getElementById('phase10-draw-button')?.addEventListener('click', drawCard);
+document.getElementById('phase10-draw-button')?.addEventListener('click', () => {
+    drawCard('player');
+});
 document.getElementById('phase10-reset-button')?.addEventListener('click', resetGame);
 
 // Start Game
-function startPhase10() {
-    phase10Deck = createPhase10Deck();
-    dealInitialCards();
-    document.getElementById('phase-number').textContent = currentPhase;
-    document.getElementById('phase-description').textContent = PHASES[0].description;
-    showMessage("Your turn! Draw or play cards.");
-}
+startPhase10();

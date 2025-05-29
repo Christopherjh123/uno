@@ -291,6 +291,40 @@
                 height: 3rem;
             }
         }
+        .phase10-card-back {
+    background-color: #2b6cb0; // Blue 700 for Phase 10 card back
+    color: white;
+    font-size: 1.5rem;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateY(180deg); // Show back of card
+    transition: transform 0.3s ease-out;
+}
+
+.phase10-card-back::before {
+    content: '10'; // Placeholder for Phase 10 logo
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotateY(180deg); // Flip text back
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: white;
+}
+
+// Phase 10 card specific colors and layout
+.card.bg-red { background-color: #ef4444; color: white; }
+.card.bg-black { background-color: #1a202c; color: white; } // Darker black for regular cards
+.card.bg-multicolor {
+    background: conic-gradient(from 0deg at 50% 50%, #ef4444, #3b82f6, #22c55e, #eab308, #ef4444);
+    color: white;
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+.card-suit {
+    position: absolute;
+    font-size: 1.2rem;
+}
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 flex flex-col items-center justify-center min-h-screen p-4">

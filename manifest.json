@@ -1,7 +1,7 @@
 {
     "name": "CJ's Card Games",
     "short_name": "CardGames",
-    "description": "A collection of card games including Uno and Ono 99.",
+    "description": "A collection of card games including Uno and Ono 99",
     "start_url": "/index.html",
     "display": "standalone",
     "background_color": "#1a202c",

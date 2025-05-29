@@ -3,412 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Game Collection</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #1a202c; /* Dark background */
-            color: #e2e8f0; /* Light text */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 1rem;
-            overflow-x: hidden; /* Prevent horizontal body scroll */
-        }
-
-        .game-chooser {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        /* Shared Button Styling */
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            border: none;
-        }
-
-        .btn-primary {
-            background-color: #4299e1; /* Blue 500 */
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #3182ce; /* Blue 600 */
-            transform: translateY(-1px);
-        }
-
-        /* Styles specific to the Uno game (kept here for simplicity, could be in styles.css) */
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            width: 100%;
-            max-width: 1000px;
-            margin: auto;
-            border-radius: 1rem;
-            background-color: #2d3748; /* Slightly lighter dark background for game area */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            padding: 1.5rem;
-            position: relative;
-            min-height: 70vh; /* Ensure game area has some height */
-        }
-
-        .card {
-            width: 5.5rem; /* ~88px */
-            height: 8rem; /* ~128px */
-            border-radius: 0.75rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 2.25rem; /* 36px */
-            cursor: pointer;
-            transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
-            user-select: none; /* Prevent text selection on cards */
-            position: relative;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            border: 2px solid transparent; /* Default border */
-        }
-
-        .card:hover:not(.disabled):not(.deck-card) {
-            transform: translateY(-0.5rem);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-        }
-
-        .card.disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        /* Card Colors */
-        .bg-red { background-color: #ef4444; color: white; } /* Red 500 */
-        .bg-blue { background-color: #3b82f6; color: white; } /* Blue 500 */
-        .bg-green { background-color: #22c55e; color: white; } /* Green 500 */
-        .bg-yellow { background-color: #eab308; color: white; } /* Yellow 500 */
-        .bg-black { background-color: #1f2937; color: white; } /* Gray 800 for wild */
-        .bg-card-back { background-color: #dc2626; color: white; } /* Red 600 for card back */
-
-        /* Specific card styles */
-        .card-value {
-            line-height: 1;
-        }
-
-        .card-action-icon {
-            font-size: 1.5rem; /* 24px */
-            line-height: 1;
-        }
-
-        .card-wild-text {
-            font-size: 1.25rem; /* 20px */
-            text-align: center;
-            line-height: 1.2;
-        }
-
-        .card.highlighted {
-            border-color: #38bdf8; /* Sky 400 */
-            box-shadow: 0 0 0 4px #38bdf8;
-        }
-
-        .hand {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            justify-content: center;
-            min-height: 9rem; /* Ensure space even with no cards */
-        }
-
-        .game-area-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 2rem;
-            padding: 1rem 0;
-        }
-
-        .deck-area, .discard-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .deck-card {
-            background-color: #dc2626; /* Red 600 */
-            color: white;
-            font-size: 1.5rem;
-            position: relative;
-            transform-style: preserve-3d;
-            transform: rotateY(180deg); /* Show back of card */
-            transition: transform 0.3s ease-out;
-        }
-
-        .deck-card::before {
-            content: 'UNO';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotateY(180deg); /* Flip text back */
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: white;
-        }
-
-        .discard-pile .card {
-            transform: rotate(0deg); /* Reset rotation for played card */
-        }
-
-        .message-box {
-            background-color: #4a5568; /* Gray 700 */
-            padding: 0.75rem 1.25rem;
-            border-radius: 0.5rem;
-            text-align: center;
-            font-size: 1.125rem; /* 18px */
-            min-height: 3rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .player-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 0;
-            font-size: 1.125rem;
-            font-weight: bold;
-        }
-
-        .player-info.current-player {
-            color: #63b3ed; /* Blue 400 */
-        }
-
-        /* Modal styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            background-color: #2d3748;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            max-width: 500px;
-            width: 90%;
-            position: relative;
-        }
-
-        .color-option {
-            width: 4rem;
-            height: 4rem;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: transform 0.1s ease-in-out;
-            border: 3px solid transparent;
-        }
-
-        .color-option:hover {
-            transform: scale(1.1);
-        }
-
-        .color-option.selected {
-            border-color: #e2e8f0; /* Light border for selected */
-        }
-
-        .uno-button {
-            background-color: #f6ad55; /* Orange 400 */
-            color: white;
-            font-size: 1.125rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            border: none;
-        }
-
-        .uno-button:hover:not(.disabled) {
-            background-color: #ed8936; /* Orange 500 */
-            transform: translateY(-1px);
-        }
-
-        .uno-button.disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .card {
-                width: 4.5rem; /* Smaller cards on mobile */
-                height: 6.5rem;
-                font-size: 1.75rem;
-            }
-            .card-action-icon {
-                font-size: 1.2rem;
-            }
-            .card-wild-text {
-                font-size: 1rem;
-            }
-            .game-area-content {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            .hand {
-                gap: 0.3rem;
-            }
-            .color-option {
-                width: 3rem;
-                height: 3rem;
-            }
-        }
-        .phase10-card-back {
-    background-color: #2b6cb0; // Blue 700 for Phase 10 card back
-    color: white;
-    font-size: 1.5rem;
-    position: relative;
-    transform-style: preserve-3d;
-    transform: rotateY(180deg); // Show back of card
-    transition: transform 0.3s ease-out;
-}
-
-.phase10-card-back::before {
-    content: '10'; // Placeholder for Phase 10 logo
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotateY(180deg); // Flip text back
-    font-size: 2.2rem;
-    font-weight: bold;
-    color: white;
-}
-
-// Phase 10 card specific colors and layout
-.card.bg-red { background-color: #ef4444; color: white; }
-.card.bg-black { background-color: #1a202c; color: white; } // Darker black for regular cards
-.card.bg-multicolor {
-    background: conic-gradient(from 0deg at 50% 50%, #ef4444, #3b82f6, #22c55e, #eab308, #ef4444);
-    color: white;
-    font-size: 1.8rem;
-    font-weight: bold;
-}
-.card-suit {
-    position: absolute;
-    font-size: 1.2rem;
-}
-    </style>
-</head>
+    <title>CJ's Card Game Collection</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a202c"> </head>
 <body class="bg-gray-900 text-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
 
-    <h1 class="text-4xl font-bold mb-6 text-blue-400">Card Game Collection</h1>
+    <div class="app-container">
+        <h1 class="text-5xl font-extrabold mb-8 text-white">CJ's Card Game Collection</h1>
 
-    <div class="game-chooser" id="game-chooser">
-        <button id="choose-uno-btn" class="btn btn-primary">Play Uno</button>
-        <button id="choose-phase10-btn" class="btn btn-primary">Play Phase 10 (Coming Soon!)</button>
-    </div>
+        <div id="game-chooser" class="mb-8 flex justify-center gap-4">
+            <button id="play-uno-button" class="btn btn-primary">Play Uno!</button>
+            <button id="play-ono99-button" class="btn btn-secondary">Play Ono 99!</button>
+        </div>
 
-    <div id="game-container" class="w-full max-w-5xl">
-        <p class="text-center text-lg mt-8">Select a game above to start playing!</p>
+        <div id="game-content" class="w-full">
+            <p class="text-xl text-gray-400">Select a game above to start playing!</p>
+        </div>
     </div>
 
     <script>
-        const gameContainer = document.getElementById('game-container');
-        const chooseUnoBtn = document.getElementById('choose-uno-btn');
-        const choosePhase10Btn = document.getElementById('choose-phase10-btn');
+        document.addEventListener('DOMContentLoaded', () => {
+            const gameContentDiv = document.getElementById('game-content');
+            const playUnoButton = document.getElementById('play-uno-button');
+            const playOno99Button = document.getElementById('play-ono99-button');
 
-        let currentScript = null; // To keep track of the currently loaded game script
+            let currentGameInstance = null; // To hold the current game's cleanup function
 
-        // Function to clean up previous game's state and listeners
-        function cleanupPreviousGame() {
-            gameContainer.innerHTML = ''; // Clear previous game's HTML
-
-            // This is a basic cleanup. For more complex games,
-            // you might need to call a specific `destroy` function
-            // defined within each game's module to properly remove
-            // event listeners, timeouts, intervals, etc.
-            // For now, simply clearing the HTML helps prevent some issues.
-            if (window.activeGame && typeof window.activeGame.destroy === 'function') {
-                window.activeGame.destroy(); // Call destroy if available
-            }
-            window.activeGame = null; // Clear active game reference
-        }
-
-        // Function to load a game
-        async function loadGame(gameName) {
-            cleanupPreviousGame(); // Clean up any previously loaded game
-
-            const scriptPath = `${gameName}.js`;
-            
-            // Dynamically load the script
-            return new Promise((resolve, reject) => {
+            // Function to load a JS file
+            function loadScript(src, callback) {
                 const script = document.createElement('script');
-                script.src = scriptPath;
-                script.onload = () => {
-                    // Check if the game initialization function exists globally
-                    if (gameName === 'uno' && typeof window.initUnoGame === 'function') {
-                        window.initUnoGame('game-container'); // Initialize Uno
-                        window.activeGame = window.unoGameInstance; // Store reference to game instance
-                        resolve();
-                    } else if (gameName === 'phase10' && typeof window.initPhase10Game === 'function') {
-                        window.initPhase10Game('game-container'); // Initialize Phase 10
-                        window.activeGame = window.phase10GameInstance; // Store reference
-                        resolve();
+                script.src = src;
+                script.onload = callback;
+                script.onerror = () => console.error(`Failed to load script: ${src}`);
+                document.body.appendChild(script);
+            }
+
+            // Function to unload a game (cleanup)
+            function unloadGame() {
+                if (currentGameInstance && typeof currentGameInstance.destroy === 'function') {
+                    currentGameInstance.destroy(); // Call the game's cleanup function
+                }
+                gameContentDiv.innerHTML = '<p class="text-xl text-gray-400">Select a game above to start playing!</p>';
+                // Remove any dynamically added scripts if necessary (optional, as page refresh handles it)
+            }
+
+            playUnoButton.addEventListener('click', () => {
+                unloadGame(); // Clean up previous game
+                gameContentDiv.innerHTML = ''; // Clear content instantly
+
+                // Load Uno.js and initialize the game
+                loadScript('uno.js', () => {
+                    if (window.initUnoGame) {
+                        window.initUnoGame('game-content');
+                        currentGameInstance = window.unoGameInstance; // Store reference for cleanup
+                        console.log("Uno game loaded.");
                     } else {
-                        console.error(`Initialization function not found for ${gameName}`);
-                        reject(new Error(`Initialization function not found for ${gameName}`));
+                        console.error("initUnoGame function not found in uno.js");
                     }
-                };
-                script.onerror = () => {
-                    console.error(`Failed to load script: ${scriptPath}`);
-                    reject(new Error(`Failed to load script: ${scriptPath}`));
-                };
-                document.head.appendChild(script);
+                });
             });
-        }
 
-        // Event listeners for game chooser buttons
-        chooseUnoBtn.addEventListener('click', () => {
-            loadGame('uno');
+            playOno99Button.addEventListener('click', () => {
+                unloadGame(); // Clean up previous game
+                gameContentDiv.innerHTML = ''; // Clear content instantly
+
+                // Load ono99.js and initialize the game
+                loadScript('ono99.js', () => {
+                    if (window.initOno99Game) {
+                        window.initOno99Game('game-content');
+                        currentGameInstance = window.ono99GameInstance; // Store reference for cleanup
+                        console.log("Ono 99 game loaded.");
+                    } else {
+                        console.error("initOno99Game function not found in ono99.js");
+                    }
+                });
+            });
+
+            // Register Service Worker for PWA (moved here from sw.js for consistency)
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(registration => {
+                            console.log('SW registered: ', registration);
+                        })
+                        .catch(registrationError => {
+                            console.log('SW registration failed: ', registrationError);
+                        });
+                });
+            }
         });
-
-        choosePhase10Btn.addEventListener('click', () => {
-            // For now, Phase 10 is a placeholder. You'll build its logic here.
-            showMessageInContainer("Phase 10 game is under construction! Check back soon.");
-            loadGame('phase10'); // This will load the placeholder Phase 10 script
-        });
-
-        function showMessageInContainer(message) {
-            gameContainer.innerHTML = `<p class="text-center text-xl mt-8">${message}</p>`;
-        }
     </script>
 </body>
 </html>

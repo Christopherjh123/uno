@@ -1,64 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Uno & Phase 10</title>
-    <script src="https://cdn.tailwindcss.com "></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter :wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css" />
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CJ's Card Game Collection</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a202c"> </head>
 <body class="bg-gray-900 text-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
-    <h1 class="text-4xl font-bold mb-6 text-blue-400">Choose a Game</h1>
 
-    <!-- Game Selection -->
-    <div id="game-select-screen" class="text-center mb-8">
-        <button id="play-uno" class="btn btn-primary mr-4">Play Uno</button>
-        <button id="play-phase10" class="btn btn-secondary">Play Phase 10</button>
-    </div>
+    <div class="app-container">
+        <h1 class="text-5xl font-extrabold mb-8 text-white">CJ's Card Game Collection</h1>
 
-    <!-- UNO Game Container -->
-    <div id="uno-container" class="game-container hidden">
-        <h2 class="text-2xl font-bold mb-4">UNO!</h2>
-        <!-- Placeholder for Uno UI -->
-        <div id="uno-root"></div>
-    </div>
-
-    <!-- Phase 10 Game Container -->
-    <div id="phase10-container" class="game-container hidden flex flex-col items-center">
-    <h2 class="text-2xl font-bold mb-4">Phase 10</h2>
-    <div class="flex justify-between w-full max-w-md mb-4">
-        <div>
-            <strong>Phase:</strong> <span id="phase-number">1</span><br>
-            <strong>Goal:</strong> <span id="phase-description"></span>
+        <div id="game-chooser" class="mb-8 flex justify-center gap-4">
+            <button id="play-uno-button" class="btn btn-primary">Play Uno!</button>
+            <button id="play-ono99-button" class="btn btn-secondary">Play Ono 99!</button>
         </div>
-        <div>
-            <strong>Score:</strong> <span id="score-value">0</span>
-        </div>
-    </div>
-    <div id="phase10-message" class="message-box mb-4">Welcome to Phase 10!</div>
-    <div id="phase10-player-hand" class="hand mb-4"></div>
-    <div id="discard-pile" class="mb-4"></div>
-    <button id="phase10-draw-button" class="btn btn-primary mt-4">Draw Card</button>
-    <button id="phase10-reset-button" class="btn btn-secondary mt-2">Reset Game</button>
-</div>
 
-    <!-- Modals -->
-    <div id="color-picker-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 class="text-2xl font-bold mb-6">Choose a Color</h2>
-            <div class="flex justify-center gap-4 mb-6">
-                <div class="color-option bg-red" data-color="red"></div>
-                <div class="color-option bg-blue" data-color="blue"></div>
-                <div class="color-option bg-green" data-color="green"></div>
-                <div class="color-option bg-yellow" data-color="yellow"></div>
-            </div>
+        <div id="game-content" class="w-full">
+            <p class="text-xl text-gray-400">Select a game above to start playing!</p>
         </div>
     </div>
 
-    <!-- Load Scripts -->
-    <script src="script.js" defer></script>
-    <script src="uno.js" defer></script>
-    <script src="phase10.js" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const gameContentDiv = document.getElementById('game-content');
+            const playUnoButton = document.getElementById('play-uno-button');
+            const playOno99Button = document.getElementById('play-ono99-button');
+
+            let currentGameInstance = null; // To hold the current game's cleanup function
+
+            // Function to load a JS file
+            function loadScript(src, callback) {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = callback;
+                script.onerror = () => console.error(`Failed to load script: ${src}`);
+                document.body.appendChild(script);
+            }
+
+            // Function to unload a game (cleanup)
+            function unloadGame() {
+                if (currentGameInstance && typeof currentGameInstance.destroy === 'function') {
+                    currentGameInstance.destroy(); // Call the game's cleanup function
+                }
+                gameContentDiv.innerHTML = '<p class="text-xl text-gray-400">Select a game above to start playing!</p>';
+                // Remove any dynamically added scripts if necessary (optional, as page refresh handles it)
+            }
+
+            playUnoButton.addEventListener('click', () => {
+                unloadGame(); // Clean up previous game
+                gameContentDiv.innerHTML = ''; // Clear content instantly
+
+                // Load Uno.js and initialize the game
+                loadScript('uno.js', () => {
+                    if (window.initUnoGame) {
+                        window.initUnoGame('game-content');
+                        currentGameInstance = window.unoGameInstance; // Store reference for cleanup
+                        console.log("Uno game loaded.");
+                    } else {
+                        console.error("initUnoGame function not found in uno.js");
+                    }
+                });
+            });
+
+            playOno99Button.addEventListener('click', () => {
+                unloadGame(); // Clean up previous game
+                gameContentDiv.innerHTML = ''; // Clear content instantly
+
+                // Load ono99.js and initialize the game
+                loadScript('ono99.js', () => {
+                    if (window.initOno99Game) {
+                        window.initOno99Game('game-content');
+                        currentGameInstance = window.ono99GameInstance; // Store reference for cleanup
+                        console.log("Ono 99 game loaded.");
+                    } else {
+                        console.error("initOno99Game function not found in ono99.js");
+                    }
+                });
+            });
+
+            // Register Service Worker for PWA (moved here from sw.js for consistency)
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(registration => {
+                            console.log('SW registered: ', registration);
+                        })
+                        .catch(registrationError => {
+                            console.log('SW registration failed: ', registrationError);
+                        });
+                });
+            }
+        });
+    </script>
 </body>
 </html>
